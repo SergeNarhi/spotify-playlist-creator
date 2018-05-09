@@ -1,0 +1,14 @@
+{
+  "apps": [
+    {
+      "name": "c8",
+      "script": "server/server.js",
+      "watch": true,
+      "ignore_watch": [
+        "node_modules",
+        ".idea",
+        ".git"
+      ]
+    }
+  ]
+}
