@@ -9,6 +9,7 @@
     "serve": "pm2 start ecosystem.json --no-daemon -s"
   },
   "dependencies": {
+    "bluebird": "^3.5.1",
     "compression": "^1.0.3",
     "cors": "^2.5.2",
     "helmet": "^3.10.0",
@@ -16,6 +17,8 @@
     "loopback-boot": "^2.6.5",
     "loopback-component-explorer": "^6.0.0",
     "loopback-connector-mongodb": "^3.4.3",
+    "request": "^2.85.0",
+    "request-promise": "^4.2.2",
     "serve-favicon": "^2.0.1",
     "spotify-web-api-node": "^3.1.1",
     "strong-error-handler": "^2.0.0"
@@ -23,8 +26,8 @@
   "devDependencies": {
     "eslint": "^3.17.1",
     "eslint-config-loopback": "^8.0.0",
-    "pm2": "^2.10.3",
-    "nsp": "^2.1.0"
+    "nsp": "^2.1.0",
+    "pm2": "^2.10.3"
   },
   "repository": {
     "type": "",

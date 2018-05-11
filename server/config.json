@@ -18,5 +18,22 @@
       "limit": "100kb"
     },
     "cors": false
+  },
+  "spotify": {
+    "userApp":{
+      "clientId": "3972abbe8fb6496ca4f60724ac85be47",
+      "clientSecret":"d18350faa4d54ef694dde4326e5461e4",
+      "redirectUri": "http://localhost:4300"
+    },
+    "searchApp":{
+      "clientId": "",
+      "clientSecret":"",
+      "redirectUri": "http://localhost:4300"
+    },
+    "recommendationsApp":{
+      "clientId": "",
+      "clientSecret":"",
+      "redirectUri": "http://localhost:4300"
+    }
   }
 }

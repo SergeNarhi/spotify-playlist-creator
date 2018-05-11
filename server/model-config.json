@@ -14,7 +14,8 @@
     ]
   },
   "User": {
-    "dataSource": "db"
+    "dataSource": "db",
+    "public": false
   },
   "AccessToken": {
     "dataSource": "db",
@@ -35,7 +36,7 @@
     "dataSource": "db",
     "public": false
   },
-  "Customer": {
+  "Spotify": {
     "dataSource": "db",
     "public": true
   }

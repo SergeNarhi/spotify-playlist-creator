@@ -1,6 +1,7 @@
 {
-  "name": "Customer",
-  "base": "PersistedModel",
+  "name": "Spotify",
+  "plural": "Spotify",
+  "base": "Model",
   "idInjection": true,
   "options": {
     "validateUpsert": true
