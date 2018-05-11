@@ -10,14 +10,33 @@ const spotifyApi = new SpotifyWebApi({
                                        redirectUri: app.get('spotify').userApp.redirectUri,
                                      });
 
-const accessToken = [
-  'BQDHj_G9SNq45tI8HNXkLX6iSdAKw2noad2aeqv-s03WC9eyFCz1-kTRXzf41vDbZo16Ia_8f6zn4gRGYv_qxKpBLR5hzGvYkzcJ-IvWaV5yIPK9mq9kkPwUTDRivFbZH2_yN3-cyZtlfLB74ZGBclciMV48kZf7_yxDBddpxkb0SxGzkMaEFDK1RZjipF5r7x3XdjdEksdKEh3gVrDK7IBk0bTaeVS8PXdnQnutZw',
+let currentAccessToken = [
+  'BQBIDk97ihsBQBxKhbfk7C9yXZY71D4EilxpPoj1O2yI-23Jkfs5f4YclJvWKWeUpM0aN_wJKTmKhfDpxfDmzOZDbPGUn7NETUNwPT4CVzmm5boSN1LJyUt1Ky3dlC_HbdjswlJP8gcLtIfvYYbHSyuuuzd220IFbJci9XVRQFV32fvmMaq1Yga99DCiTMQYPip5fHCw3Q7IGlwpu7FWN3N15DTu5XOvHvIkmKvdPQ',
 ]
   .join('');
 
 const USER_ID = '22ax75yxa77ecwcskbahjgsaa';
 
-spotifyApi.setAccessToken(accessToken);
+spotifyApi.setAccessToken(currentAccessToken);
+
+function setAccessToken(token) {
+  currentAccessToken = token;
+  spotifyApi.setAccessToken(currentAccessToken);
+}
+
+function chunkArray(sourceArray, chunkMaxLength) {
+  let chunks = [],
+    i = 0,
+    n = sourceArray.length;
+  while (i < n) {
+    chunks.push(sourceArray.slice(i, i += chunkMaxLength));
+  }
+  return chunks;
+}
+
+
+// https://accounts.spotify.com/authorize?client_id=3972abbe8fb6496ca4f60724ac85be47&redirect_uri=http://localhost:4300&scope=user-read-private%20user-read-email%20playlist-modify-public%20playlist-modify-private&response_type=token&state=123
+// http://localhost:4300/#access_token=BQBIDk97ihsBQBxKhbfk7C9yXZY71D4EilxpPoj1O2yI-23Jkfs5f4YclJvWKWeUpM0aN_wJKTmKhfDpxfDmzOZDbPGUn7NETUNwPT4CVzmm5boSN1LJyUt1Ky3dlC_HbdjswlJP8gcLtIfvYYbHSyuuuzd220IFbJci9XVRQFV32fvmMaq1Yga99DCiTMQYPip5fHCw3Q7IGlwpu7FWN3N15DTu5XOvHvIkmKvdPQ&token_type=Bearer&expires_in=3600&state=123
 
 module.exports = function (Spotify) {
   Spotify.createPlaylist = (userId, playListName) => {
@@ -36,13 +55,10 @@ module.exports = function (Spotify) {
         });
     });
   };
-
-  // https://accounts.spotify.com/authorize?client_id=3972abbe8fb6496ca4f60724ac85be47&redirect_uri=http://localhost:4300&scope=user-read-private%20user-read-email%20playlist-modify-public%20playlist-modify-private&response_type=token&state=123
-  // http://localhost:4300/#access_token=BQDHj_G9SNq45tI8HNXkLX6iSdAKw2noad2aeqv-s03WC9eyFCz1-kTRXzf41vDbZo16Ia_8f6zn4gRGYv_qxKpBLR5hzGvYkzcJ-IvWaV5yIPK9mq9kkPwUTDRivFbZH2_yN3-cyZtlfLB74ZGBclciMV48kZf7_yxDBddpxkb0SxGzkMaEFDK1RZjipF5r7x3XdjdEksdKEh3gVrDK7IBk0bTaeVS8PXdnQnutZw&token_type=Bearer&expires_in=3600&state=123
-
   Spotify.getRecommendations = (seeds) => {
+    const TRAKCS_PER_SEED = 5;
     const url = 'https://api.spotify.com/v1/recommendations';
-    let recommendations, recommendationsRes;
+    let recommendations;
 
     return new Promise((resolve, reject) => {
       const options = {
@@ -50,7 +66,8 @@ module.exports = function (Spotify) {
         url: url,
         json: true,
         qs: {
-          limit: 10,
+          // better experience with batching
+          limit: TRAKCS_PER_SEED * seeds.length,
           'seed_tracks': seeds.filter(seed => seed.type === 'track')
                               .map(seed => seed.id)
                               .join(','),
@@ -62,7 +79,7 @@ module.exports = function (Spotify) {
                               .join(','),
         },
         headers: {
-          'Authorization': 'Bearer ' + accessToken,
+          'Authorization': 'Bearer ' + currentAccessToken,
           'Content-Type': 'application/json',
           'Accept': 'application/json',
         },
@@ -75,6 +92,21 @@ module.exports = function (Spotify) {
         .catch((res) => {
           reject(res.error);
         });
+    });
+  };
+
+  Spotify.getRecommendationsBatched = (seeds) => {
+    let recommendations;
+    let chunkedSeeds = chunkArray(seeds, 5);
+    return new Promise((resolve, reject) => {
+      Promise.map(chunkedSeeds, Spotify.getRecommendations)
+             .then((batchedRecommendations) => {
+               recommendations = [].concat.apply([], batchedRecommendations);
+               resolve(recommendations);
+             })
+             .catch((err) => {
+               reject(err);
+             });
     });
   };
 
@@ -104,7 +136,6 @@ module.exports = function (Spotify) {
     return new Promise((resolve, reject) => {
       spotifyApi.searchArtists('"' + name + '"', { limit: 1 })
                 .then(function (data) {
-                  // todo: debug and set correct fields
                   artistId = data.body.artists.items[ 0 ] &&
                              data.body.artists.items[ 0 ].id;
                   artist = {
@@ -121,124 +152,6 @@ module.exports = function (Spotify) {
   };
 
 
-  let ccc = [
-    {
-      'id': 1,
-      'audienceGroupId': 58,
-      'name': 'Tom Petty',
-      'createdDate': '2016-11-11T15:35:13.655Z',
-      'lastUpdatedDate': '2016-11-11T15:35:13.655Z',
-      'isDeleted': false,
-      'audienceGroup': {
-        'id': 58,
-        'name': 'Celebrities',
-        'createdBy': '1',
-        'lastUpdatedBy': '1',
-        'createdDate': '2016-11-11T18:40:52.469Z',
-        'lastUpdatedDate': '2016-11-11T18:40:52.469Z',
-        'isDeleted': false,
-        '$type': 'audienceGroup',
-      },
-      '$type': 'audience',
-    },
-    {
-      'id': 1,
-      'audienceGroupId': 58,
-      'name': 'Rammstein',
-      'createdDate': '2016-11-11T15:35:13.655Z',
-      'lastUpdatedDate': '2016-11-11T15:35:13.655Z',
-      'isDeleted': false,
-      'audienceGroup': {
-        'id': 58,
-        'name': 'Celebrities',
-        'createdBy': '1',
-        'lastUpdatedBy': '1',
-        'createdDate': '2016-11-11T18:40:52.469Z',
-        'lastUpdatedDate': '2016-11-11T18:40:52.469Z',
-        'isDeleted': false,
-        '$type': 'audienceGroup',
-      },
-      '$type': 'audience',
-    },
-    {
-      'id': 1,
-      'audienceGroupId': 58,
-      'name': 'Gangnam Style',
-      'createdDate': '2016-11-11T15:35:13.655Z',
-      'lastUpdatedDate': '2016-11-11T15:35:13.655Z',
-      'isDeleted': false,
-      'audienceGroup': {
-        'id': 58,
-        'name': 'Songs',
-        'createdBy': '1',
-        'lastUpdatedBy': '1',
-        'createdDate': '2016-11-11T18:40:52.469Z',
-        'lastUpdatedDate': '2016-11-11T18:40:52.469Z',
-        'isDeleted': false,
-        '$type': 'audienceGroup',
-      },
-      '$type': 'audience',
-    },
-    {
-      'id': 1,
-      'audienceGroupId': 58,
-      'name': 'Pop Rock',
-      'createdDate': '2016-11-11T15:35:13.655Z',
-      'lastUpdatedDate': '2016-11-11T15:35:13.655Z',
-      'isDeleted': false,
-      'audienceGroup': {
-        'id': 58,
-        'name': 'Music Genre',
-        'createdBy': '1',
-        'lastUpdatedBy': '1',
-        'createdDate': '2016-11-11T18:40:52.469Z',
-        'lastUpdatedDate': '2016-11-11T18:40:52.469Z',
-        'isDeleted': false,
-        '$type': 'audienceGroup',
-      },
-      '$type': 'audience',
-    },
-    {
-      'id': 1,
-      'audienceGroupId': 58,
-      'name': 'East Asian',
-      'createdDate': '2016-11-11T15:35:13.655Z',
-      'lastUpdatedDate': '2016-11-11T15:35:13.655Z',
-      'isDeleted': false,
-      'audienceGroup': {
-        'id': 58,
-        'name': 'Music Genre',
-        'createdBy': '1',
-        'lastUpdatedBy': '1',
-        'createdDate': '2016-11-11T18:40:52.469Z',
-        'lastUpdatedDate': '2016-11-11T18:40:52.469Z',
-        'isDeleted': false,
-        '$type': 'audienceGroup',
-      },
-      '$type': 'audience',
-    },
-    {
-      'id': 1,
-      'audienceGroupId': 58,
-      'name': 'Latin American',
-      'createdDate': '2016-11-11T15:35:13.655Z',
-      'lastUpdatedDate': '2016-11-11T15:35:13.655Z',
-      'isDeleted': false,
-      'audienceGroup': {
-        'id': 58,
-        'name': 'Music Genre',
-        'createdBy': '1',
-        'lastUpdatedBy': '1',
-        'createdDate': '2016-11-11T18:40:52.469Z',
-        'lastUpdatedDate': '2016-11-11T18:40:52.469Z',
-        'isDeleted': false,
-        '$type': 'audienceGroup',
-      },
-      '$type': 'audience',
-    },
-  ];
-
-
   Spotify.searchSeedId = (sourceSeeds) => {
     return Promise.map(sourceSeeds, (sourceSeed) => {
       if (sourceSeed.audienceGroup.name === 'Track' ||
@@ -250,7 +163,8 @@ module.exports = function (Spotify) {
       } else if (sourceSeed.audienceGroup.name === 'Genre' ||
                  sourceSeed.audienceGroup.name === 'Music Genre') {
         return {
-          id: sourceSeed.name,
+          id: sourceSeed.name.toLowerCase()
+                        .replace(' ', '-'),
           name: sourceSeed.name,
           type: 'genre',
         };
@@ -277,30 +191,40 @@ module.exports = function (Spotify) {
   };
 
 
-  Spotify.demo = (userId, sourceSeeds, accessToken, cb) => {
-    let playlist, seeds;
-    return Spotify.createPlaylist(userId)
-                  .then((playlistRes) => {
-                    playlist = playlistRes;
-                    return Spotify.searchSeedId(sourceSeeds);
-                  })
-                  .then((seedsRes) => {
-                    seeds = seedsRes;
-                    return Spotify.getRecommendations(seeds);
-                  })
-                  .then((recommendations) => {
-                    return Spotify.addTracksToPlaylist(
-                      userId,
-                      playlist.id,
-                      recommendations,
-                    );
-                  })
-                  .then((results) => {
-                    console.log(JSON.stringify(results, null, 2));
-                  })
-                  .catch((err) => {
-                    console.log(err);
-                  });
+  Spotify.demo = (userId, sourceSeeds, accessToken) => {
+    let playlist, seeds, recommendationsLength;
+    if (accessToken) {
+      setAccessToken(accessToken);
+    }
+    return new Promise((resolve, reject) => {
+      Spotify.createPlaylist(userId)
+             .then((playlistRes) => {
+               playlist = playlistRes;
+               return Spotify.searchSeedId(sourceSeeds);
+             })
+             .then((seedsRes) => {
+               seeds = seedsRes;
+               return Spotify.getRecommendationsBatched(seeds);
+             })
+             .then((recommendations) => {
+               recommendationsLength = recommendations.length;
+               return Spotify.addTracksToPlaylist(
+                 userId,
+                 playlist.id,
+                 recommendations,
+               );
+             })
+             .then(() => {
+               resolve({
+                         results: 'done',
+                         tracksAdded: recommendationsLength,
+                       });
+             })
+             .catch((err) => {
+               console.log(err);
+               reject(err);
+             });
+    });
   };
 
   Spotify.remoteMethod('demo', {
@@ -325,3 +249,120 @@ module.exports = function (Spotify) {
     ],
   });
 };
+
+let ccc = [
+  {
+    'id': 1,
+    'audienceGroupId': 58,
+    'name': 'Tom Petty',
+    'createdDate': '2016-11-11T15:35:13.655Z',
+    'lastUpdatedDate': '2016-11-11T15:35:13.655Z',
+    'isDeleted': false,
+    'audienceGroup': {
+      'id': 58,
+      'name': 'Celebrities',
+      'createdBy': '1',
+      'lastUpdatedBy': '1',
+      'createdDate': '2016-11-11T18:40:52.469Z',
+      'lastUpdatedDate': '2016-11-11T18:40:52.469Z',
+      'isDeleted': false,
+      '$type': 'audienceGroup',
+    },
+    '$type': 'audience',
+  },
+  {
+    'id': 1,
+    'audienceGroupId': 58,
+    'name': 'Rammstein',
+    'createdDate': '2016-11-11T15:35:13.655Z',
+    'lastUpdatedDate': '2016-11-11T15:35:13.655Z',
+    'isDeleted': false,
+    'audienceGroup': {
+      'id': 58,
+      'name': 'Celebrities',
+      'createdBy': '1',
+      'lastUpdatedBy': '1',
+      'createdDate': '2016-11-11T18:40:52.469Z',
+      'lastUpdatedDate': '2016-11-11T18:40:52.469Z',
+      'isDeleted': false,
+      '$type': 'audienceGroup',
+    },
+    '$type': 'audience',
+  },
+  {
+    'id': 1,
+    'audienceGroupId': 58,
+    'name': 'Gangnam Style',
+    'createdDate': '2016-11-11T15:35:13.655Z',
+    'lastUpdatedDate': '2016-11-11T15:35:13.655Z',
+    'isDeleted': false,
+    'audienceGroup': {
+      'id': 58,
+      'name': 'Songs',
+      'createdBy': '1',
+      'lastUpdatedBy': '1',
+      'createdDate': '2016-11-11T18:40:52.469Z',
+      'lastUpdatedDate': '2016-11-11T18:40:52.469Z',
+      'isDeleted': false,
+      '$type': 'audienceGroup',
+    },
+    '$type': 'audience',
+  },
+  {
+    'id': 1,
+    'audienceGroupId': 58,
+    'name': 'Pop Rock',
+    'createdDate': '2016-11-11T15:35:13.655Z',
+    'lastUpdatedDate': '2016-11-11T15:35:13.655Z',
+    'isDeleted': false,
+    'audienceGroup': {
+      'id': 58,
+      'name': 'Music Genre',
+      'createdBy': '1',
+      'lastUpdatedBy': '1',
+      'createdDate': '2016-11-11T18:40:52.469Z',
+      'lastUpdatedDate': '2016-11-11T18:40:52.469Z',
+      'isDeleted': false,
+      '$type': 'audienceGroup',
+    },
+    '$type': 'audience',
+  },
+  {
+    'id': 1,
+    'audienceGroupId': 58,
+    'name': 'East Asian',
+    'createdDate': '2016-11-11T15:35:13.655Z',
+    'lastUpdatedDate': '2016-11-11T15:35:13.655Z',
+    'isDeleted': false,
+    'audienceGroup': {
+      'id': 58,
+      'name': 'Music Genre',
+      'createdBy': '1',
+      'lastUpdatedBy': '1',
+      'createdDate': '2016-11-11T18:40:52.469Z',
+      'lastUpdatedDate': '2016-11-11T18:40:52.469Z',
+      'isDeleted': false,
+      '$type': 'audienceGroup',
+    },
+    '$type': 'audience',
+  },
+  {
+    'id': 1,
+    'audienceGroupId': 58,
+    'name': 'Latin American',
+    'createdDate': '2016-11-11T15:35:13.655Z',
+    'lastUpdatedDate': '2016-11-11T15:35:13.655Z',
+    'isDeleted': false,
+    'audienceGroup': {
+      'id': 58,
+      'name': 'Music Genre',
+      'createdBy': '1',
+      'lastUpdatedBy': '1',
+      'createdDate': '2016-11-11T18:40:52.469Z',
+      'lastUpdatedDate': '2016-11-11T18:40:52.469Z',
+      'isDeleted': false,
+      '$type': 'audienceGroup',
+    },
+    '$type': 'audience',
+  },
+];
