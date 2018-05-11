@@ -3,9 +3,10 @@
   "version": "1.0.0",
   "main": "server/server.js",
   "engines": {
-    "node": ">=4"
+    "node": ">=8"
   },
   "scripts": {
+    "start": "node server/server.js",
     "serve": "pm2 start ecosystem.json --no-daemon -s"
   },
   "dependencies": {
@@ -16,7 +17,6 @@
     "loopback": "^3.19.0",
     "loopback-boot": "^2.6.5",
     "loopback-component-explorer": "^6.0.0",
-    "loopback-connector-mongodb": "^3.4.3",
     "request": "^2.85.0",
     "request-promise": "^4.2.2",
     "serve-favicon": "^2.0.1",
@@ -28,10 +28,6 @@
     "eslint-config-loopback": "^8.0.0",
     "nsp": "^2.1.0",
     "pm2": "^2.10.3"
-  },
-  "repository": {
-    "type": "",
-    "url": ""
   },
   "license": "UNLICENSED",
   "description": "spotify-playlist-creator"

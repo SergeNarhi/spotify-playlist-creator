@@ -1,8 +1,6 @@
 {
   "db": {
-    "host": "db",
-    "database": "db",
     "name": "db",
-    "connector": "mongodb"
+    "connector": "memory"
   }
 }

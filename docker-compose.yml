@@ -14,17 +14,6 @@ services:
         - NO_DEMO=true
     networks:
       - c8
-    depends_on:
-      - db
-
-  db:
-    image: mongo
-    ports:
-      - 27017
-    logging:
-      driver: "none"
-    networks:
-      - c8
 
 networks:
   c8:
