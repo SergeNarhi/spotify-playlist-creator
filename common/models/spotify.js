@@ -196,6 +196,14 @@ module.exports = function (Spotify) {
     if (accessToken) {
       setAccessToken(accessToken);
     }
+    sourceSeeds = sourceSeeds.filter(
+      sourceSeed => sourceSeed.audienceGroup.name === 'Track' ||
+                    sourceSeed.audienceGroup.name === 'Songs' ||
+                    sourceSeed.audienceGroup.name === 'Artist' ||
+                    sourceSeed.audienceGroup.name === 'Celebrities' ||
+                    sourceSeed.audienceGroup.name === 'Genre' ||
+                    sourceSeed.audienceGroup.name === 'Music Genre');
+
     return new Promise((resolve, reject) => {
       Spotify.createPlaylist(userId)
              .then((playlistRes) => {
@@ -250,7 +258,7 @@ module.exports = function (Spotify) {
   });
 };
 
-let ccc = [
+let testData = [
   {
     'id': 1,
     'audienceGroupId': 58,
@@ -356,6 +364,25 @@ let ccc = [
     'audienceGroup': {
       'id': 58,
       'name': 'Music Genre',
+      'createdBy': '1',
+      'lastUpdatedBy': '1',
+      'createdDate': '2016-11-11T18:40:52.469Z',
+      'lastUpdatedDate': '2016-11-11T18:40:52.469Z',
+      'isDeleted': false,
+      '$type': 'audienceGroup',
+    },
+    '$type': 'audience',
+  },
+  {
+    'id': 1,
+    'audienceGroupId': 58,
+    'name': 'Latin American',
+    'createdDate': '2016-11-11T15:35:13.655Z',
+    'lastUpdatedDate': '2016-11-11T15:35:13.655Z',
+    'isDeleted': false,
+    'audienceGroup': {
+      'id': 58,
+      'name': 'Music Genre beep test',
       'createdBy': '1',
       'lastUpdatedBy': '1',
       'createdDate': '2016-11-11T18:40:52.469Z',
