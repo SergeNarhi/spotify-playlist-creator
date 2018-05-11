@@ -19,5 +19,6 @@
   "validations": [],
   "relations": {},
   "acls": [],
-  "methods": {}
+  "methods": {},
+  "description": "To get accessToken go to https://goo.gl/3kJjjp and copy it from query param"
 }
