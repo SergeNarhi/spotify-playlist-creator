@@ -29,7 +29,6 @@ module.exports = function (Spotify) {
           { 'public': false },
         )
         .then((res) => {
-          console.log('Created playlist!');
           resolve(res.body);
         })
         .catch((err) => {
@@ -70,9 +69,7 @@ module.exports = function (Spotify) {
       };
       request(options)
         .then((recommendationsRes) => {
-          console.log(JSON.stringify(recommendationsRes, null, 2));
           recommendations = recommendationsRes.tracks.map((track) => track.uri);
-          console.log(JSON.stringify(recommendations, null, 2));
           resolve(recommendations);
         })
         .catch((res) => {
@@ -94,7 +91,6 @@ module.exports = function (Spotify) {
                     name: name,
                     type: 'track',
                   };
-                  console.log(track);
                   resolve(track);
                 })
                 .catch((err) => {
@@ -116,7 +112,6 @@ module.exports = function (Spotify) {
                     name: name,
                     type: 'artist',
                   };
-                  console.log(artist);
                   resolve(artist);
                 })
                 .catch((err) => {
@@ -245,11 +240,7 @@ module.exports = function (Spotify) {
 
 
   Spotify.searchSeedId = (sourceSeeds) => {
-    console.log('seeds', JSON.stringify(sourceSeeds, null, 2));
     return Promise.map(sourceSeeds, (sourceSeed) => {
-
-      console.log('seed', JSON.stringify(sourceSeed, null, 2));
-
       if (sourceSeed.audienceGroup.name === 'Track' ||
           sourceSeed.audienceGroup.name === 'Songs') {
         return Spotify.searchTrack(sourceSeed.name);
@@ -276,8 +267,7 @@ module.exports = function (Spotify) {
         playListId,
         tracksURIs,
       )
-                .then(function (data) {
-                  console.log('Added tracks to playlist!');
+                .then((data) => {
                   resolve(data.body);
                 })
                 .catch((err) => {
@@ -288,17 +278,14 @@ module.exports = function (Spotify) {
 
 
   Spotify.demo = (userId, sourceSeeds, accessToken, cb) => {
-    console.log('1seeds', sourceSeeds);
     let playlist, seeds;
     return Spotify.createPlaylist(userId)
                   .then((playlistRes) => {
                     playlist = playlistRes;
-                    console.log(JSON.stringify(playlist, null, 2));
                     return Spotify.searchSeedId(sourceSeeds);
                   })
                   .then((seedsRes) => {
                     seeds = seedsRes;
-                    console.log('seeds', JSON.stringify(seeds, null, 2));
                     return Spotify.getRecommendations(seeds);
                   })
                   .then((recommendations) => {
