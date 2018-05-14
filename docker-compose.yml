@@ -6,7 +6,7 @@ services:
     working_dir: /app
     entrypoint: sh -c "yarn && yarn serve"
     ports:
-       - 4300:4300
+       - 3000:3000
     volumes:
         - .:/app
     environment:

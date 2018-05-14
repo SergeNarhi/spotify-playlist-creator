@@ -1,4 +1,4 @@
-var SpotifyApi = require('../spotify-api');
+var SpotifyApi = require('../spotify-api/index');
 var CommonUtils = require('../../lib/utils');
 var Promise = require('bluebird');
 

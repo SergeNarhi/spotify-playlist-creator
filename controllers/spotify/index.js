@@ -1,4 +1,4 @@
-var SpotifyService = require('../../services/spotify');
+var SpotifyService = require('../../services/spotify/index');
 
 module.exports = {
   addRecommendationsBySeeds: function (req, res, next) {

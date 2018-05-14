@@ -1,6 +1,6 @@
 var express = require('express');
 var router = express.Router();
-var SpotifyController = require('../controllers/spotify');
+var SpotifyController = require('../controllers/spotify/index');
 
 /* GET users listing. */
 router.post(
