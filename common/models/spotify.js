@@ -36,7 +36,7 @@ function chunkArray(sourceArray, chunkMaxLength) {
 
 
 // https://accounts.spotify.com/authorize?client_id=3972abbe8fb6496ca4f60724ac85be47&redirect_uri=http://localhost:4300&scope=user-read-private%20user-read-email%20playlist-modify-public%20playlist-modify-private&response_type=token&state=123
-// http://localhost:4300/#access_token=BQBIDk97ihsBQBxKhbfk7C9yXZY71D4EilxpPoj1O2yI-23Jkfs5f4YclJvWKWeUpM0aN_wJKTmKhfDpxfDmzOZDbPGUn7NETUNwPT4CVzmm5boSN1LJyUt1Ky3dlC_HbdjswlJP8gcLtIfvYYbHSyuuuzd220IFbJci9XVRQFV32fvmMaq1Yga99DCiTMQYPip5fHCw3Q7IGlwpu7FWN3N15DTu5XOvHvIkmKvdPQ&token_type=Bearer&expires_in=3600&state=123
+// http://localhost:4300/#access_token=BQC6zItOqSH8fnBKN2GMEVpgR3K_tCXkTqqOnJGkIdwFnjr_2eUg6ypllSFGy7nw1Z8FZJm-yqSJuDQ_DVoe8f9lzAEwHTYzG-qePnhXpoD7YtUGOJU_uQ1M5NsZr_xV7RtLhQ65N77pXbnNNk_HgKHQQmZPZm15kXF7beYUuAXlwAPfCoSDeuD5uWFpgj_r1ejg1YbMqPhfdBZz08GaWrWJK-Tjnpnb9NygdqlYjw&token_type=Bearer&expires_in=3600&state=123
 
 module.exports = function (Spotify) {
   Spotify.createPlaylist = (userId, playListName) => {
