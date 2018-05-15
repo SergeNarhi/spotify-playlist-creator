@@ -1,5 +1,6 @@
 var SpotifyApi = require('../spotify-api/index');
 var CommonUtils = require('../../lib/utils');
+var SeedsService = require('../seed');
 var Promise = require('bluebird');
 
 function isTrack(seed) {
@@ -18,8 +19,8 @@ function filterAvailableSeeds(seeds) {
   return seeds.filter(
     sourceSeed => {
       return isTrack(sourceSeed) ||
-             isArtist(sourceSeed) ||
-             isGenre(sourceSeed);
+        isArtist(sourceSeed) ||
+        isGenre(sourceSeed);
     });
 }
 
@@ -32,7 +33,7 @@ function searchSeedId(sourceSeeds) {
     } else if (isGenre(sourceSeed)) {
       return {
         id: sourceSeed.name.toLowerCase()
-                      .replace(' ', '-'),
+          .replace(' ', '-'),
         name: sourceSeed.name,
         type: 'genre',
       };
@@ -45,13 +46,13 @@ function getRecommendationsBatched(seeds) {
   let chunkedSeeds = CommonUtils.chunkArray(seeds, 5);
   return new Promise((resolve, reject) => {
     Promise.map(chunkedSeeds, SpotifyApi.getRecommendations)
-           .then((batchedRecommendations) => {
-             recommendations = [].concat.apply([], batchedRecommendations);
-             resolve(recommendations);
-           })
-           .catch((err) => {
-             reject(err);
-           });
+      .then((batchedRecommendations) => {
+        recommendations = [].concat.apply([], batchedRecommendations);
+        resolve(recommendations);
+      })
+      .catch((err) => {
+        reject(err);
+      });
   });
 }
 
@@ -60,37 +61,37 @@ function addRecommendationsBySeeds(userId, sourceSeeds, accessToken) {
 
   return new Promise((resolve, reject) => {
     SpotifyApi.setAccessToken(accessToken);
-    sourceSeeds = filterAvailableSeeds(sourceSeeds);
+    sourceSeeds = SeedsService.filterAvailableSeeds(sourceSeeds);
 
     SpotifyApi.createPlaylist(userId)
-              .then((playlistRes) => {
-                playlist = playlistRes;
-                return searchSeedId(sourceSeeds);
-              })
-              .then((seedsRes) => {
-                seeds = seedsRes;
-                return getRecommendationsBatched(seeds);
-              })
-              .then((recommendations) => {
-                recommendationsLength = recommendations.length;
-                return SpotifyApi
-                  .addTracksToPlaylist(
-                    userId,
-                    playlist.id,
-                    recommendations,
-                  );
-              })
-              .then(() => {
-                resolve(
-                  {
-                    results: 'done',
-                    tracksAdded: recommendationsLength,
-                  });
-              })
-              .catch((err) => {
-                console.log(err);
-                reject(err);
-              });
+      .then((playlistRes) => {
+        playlist = playlistRes;
+        return searchSeedId(sourceSeeds);
+      })
+      .then((seedsRes) => {
+        seeds = seedsRes;
+        return getRecommendationsBatched(seeds);
+      })
+      .then((recommendations) => {
+        recommendationsLength = recommendations.length;
+        return SpotifyApi
+          .addTracksToPlaylist(
+            userId,
+            playlist.id,
+            recommendations,
+        );
+      })
+      .then(() => {
+        resolve(
+          {
+            results: 'done',
+            tracksAdded: recommendationsLength,
+          });
+      })
+      .catch((err) => {
+        console.log(err);
+        reject(err);
+      });
   });
 }
 
