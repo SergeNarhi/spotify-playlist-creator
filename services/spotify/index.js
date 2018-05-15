@@ -3,49 +3,41 @@ var CommonUtils = require('../../lib/utils');
 var SeedsService = require('../seed');
 var Promise = require('bluebird');
 
-function isTrack(seed) {
-  return seed.audienceGroup.name === 'Songs';
-}
-
-function isArtist(seed) {
-  return seed.audienceGroup.name === 'Celebrities';
-}
-
-function isGenre(seed) {
-  return seed.audienceGroup.name === 'Music Genre';
-}
-
 function filterAvailableSeeds(seeds) {
   return seeds.filter(
     sourceSeed => {
-      return isTrack(sourceSeed) ||
-        isArtist(sourceSeed) ||
-        isGenre(sourceSeed);
+      return SeedsService.isTrack(sourceSeed) ||
+        SeedsService.isArtist(sourceSeed) ||
+        SeedsService.isGenre(sourceSeed);
     });
 }
 
 function searchSeedId(sourceSeeds) {
   return Promise.map(sourceSeeds, (sourceSeed) => {
-    if (isTrack(sourceSeed)) {
-      return SpotifyApi.searchTrack(sourceSeed.name);
-    } else if (isArtist(sourceSeed)) {
-      return SpotifyApi.searchArtist(sourceSeed.name);
-    } else if (isGenre(sourceSeed)) {
-      return {
-        id: sourceSeed.name.toLowerCase()
-          .replace(' ', '-'),
-        name: sourceSeed.name,
-        type: 'genre',
-      };
+    if (SeedsService.isTrack(sourceSeed)) {
+      return SpotifyApi.searchTrack(sourceSeed);
+    } else if (SeedsService.isArtist(sourceSeed)) {
+      return SpotifyApi.searchArtist(sourceSeed);
+    } else if (SeedsService.isGenre(sourceSeed)) {
+      sourceSeed.id = sourceSeed.name.toLowerCase()
+        .replace(' ', '-')
+      return sourceSeed;
+    } else {
+      return sourceSeed;
     }
   });
 }
 
 function getRecommendationsBatched(seeds) {
-  let recommendations;
-  let chunkedSeeds = CommonUtils.chunkArray(seeds, 5);
+  var recommendations;
+  var calculateableSeeds = seeds.filter(seed => seed.calculateable);
+  var uncalculateableSeeds = seeds.filter(seed => !seed.calculateable);
+  var tuneableAttributes = SeedsService.calculateSeeds(calculateableSeeds);
+  var chunkedSeeds = CommonUtils.chunkArray(uncalculateableSeeds, 5);
   return new Promise((resolve, reject) => {
-    Promise.map(chunkedSeeds, SpotifyApi.getRecommendations)
+    Promise.map(chunkedSeeds, seedsChunk => {
+      return SpotifyApi.getRecommendations(seedsChunk, tuneableAttributes);
+    })
       .then((batchedRecommendations) => {
         recommendations = [].concat.apply([], batchedRecommendations);
         resolve(recommendations);
