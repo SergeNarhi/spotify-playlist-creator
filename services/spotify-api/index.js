@@ -15,7 +15,7 @@ const spotifyApi = new SpotifyWebApi(
   });
 
 var currentAccessToken = [
-  'BQBIDk97ihsBQBxKhbfk7C9yXZY71D4EilxpPoj1O2yI-23Jkfs5f4YclJvWKWeUpM0aN_wJKTmKhfDpxfDmzOZDbPGUn7NETUNwPT4CVzmm5boSN1LJyUt1Ky3dlC_HbdjswlJP8gcLtIfvYYbHSyuuuzd220IFbJci9XVRQFV32fvmMaq1Yga99DCiTMQYPip5fHCw3Q7IGlwpu7FWN3N15DTu5XOvHvIkmKvdPQ',
+  process.env.ACCESS_TOKEN,
 ]
   .join('');
 
